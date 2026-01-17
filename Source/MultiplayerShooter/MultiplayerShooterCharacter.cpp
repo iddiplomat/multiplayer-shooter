@@ -16,9 +16,11 @@
 #include "OnlineSubsystem.h"
 #include "Interfaces/OnlineSessionInterface.h"
 #include "OnlineSessionSettings.h"
+#include "Online/OnlineSessionNames.h"
 
 AMultiplayerShooterCharacter::AMultiplayerShooterCharacter() :
-	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShooterCharacter::OnCreateSessionComplete))
+	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShooterCharacter::OnCreateSessionComplete)),
+	FindSessionsCompleteDelegate(FOnFindSessionsCompleteDelegate::CreateUObject(this, &AMultiplayerShooterCharacter::OnFindSessionsComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -175,32 +177,71 @@ void AMultiplayerShooterCharacter::CreateGameSession()
 	SessionSettings->bAllowJoinViaPresence = true;
 	SessionSettings->bShouldAdvertise = true;
 	SessionSettings->bUsesPresence = true;
+	SessionSettings->bUseLobbiesIfAvailable = true;
+	
 	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
 	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
 }
 
+void AMultiplayerShooterCharacter::JoinGameSession()
+{
+	if (!OnlineSessionInterface.IsValid())
+	{
+		return;
+	}
+	
+	OnlineSessionInterface->AddOnFindSessionsCompleteDelegate_Handle(FindSessionsCompleteDelegate);
+	
+	SessionSearch = MakeShareable(new FOnlineSessionSearch());
+	SessionSearch->MaxSearchResults = 10000;
+	SessionSearch->bIsLanQuery = false;
+	SessionSearch->QuerySettings.Set(SETTING_GAMEMODE, true, EOnlineComparisonOp::Equals);
+	
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	
+	OnlineSessionInterface->FindSessions(*LocalPlayer->GetPreferredUniqueNetId(), SessionSearch.ToSharedRef());
+}
+
 void AMultiplayerShooterCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
 {
-	if (bWasSuccessful)
+	if (GEngine)
 	{
-		if (GEngine)
+		if (bWasSuccessful)
 		{
 			GEngine->AddOnScreenDebugMessage(
-				-1, 
-				15.0f,
-				FColor::Blue, 
-				FString::Printf(TEXT("Created session %s"), *SessionName.ToString()));
+					-1, 
+					15.0f,
+					FColor::Blue, 
+					FString::Printf(TEXT("Created session %s"), *SessionName.ToString()));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(
+					-1, 
+					15.0f,
+					FColor::Red, 
+					FString(TEXT("Failed to create session!")));
 		}
 	}
-	else
+}
+
+void AMultiplayerShooterCharacter::OnFindSessionsComplete(bool bWasSuccessful)
+{
+	for (FOnlineSessionSearchResult Result : SessionSearch->SearchResults)
 	{
+		const FString Id = Result.GetSessionIdStr();
+		const FString User = Result.Session.OwningUserName;
+		
+		Result.Session.SessionSettings.bUsesPresence = true;
+		Result.Session.SessionSettings.bUseLobbiesIfAvailable = true;
+		
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
-				-1, 
-				15.0f,
-				FColor::Red, 
-				FString(TEXT("Failed to create session!")));
+					-1, 
+					 15.0f,
+					FColor::Cyan, 
+					FString::Printf(TEXT("Id: %s, User: %s"), *Id, *User));
 		}
 	}
 }
