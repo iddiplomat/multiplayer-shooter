@@ -13,8 +13,12 @@
 #include "MultiplayerShooter.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/PlayerController.h"
+#include "OnlineSubsystem.h"
+#include "Interfaces/OnlineSessionInterface.h"
+#include "OnlineSessionSettings.h"
 
-AMultiplayerShooterCharacter::AMultiplayerShooterCharacter()
+AMultiplayerShooterCharacter::AMultiplayerShooterCharacter() :
+	CreateSessionCompleteDelegate(FOnCreateSessionCompleteDelegate::CreateUObject(this, &AMultiplayerShooterCharacter::OnCreateSessionComplete))
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
@@ -50,6 +54,21 @@ AMultiplayerShooterCharacter::AMultiplayerShooterCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	
+	IOnlineSubsystem* OnlineSubsystem = IOnlineSubsystem::Get();
+	if (OnlineSubsystem)
+	{
+		OnlineSessionInterface = OnlineSubsystem->GetSessionInterface();
+		
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1, 
+				15.0f, 
+				FColor::Blue, 
+				FString::Printf(TEXT("Found subsystem %s"), *OnlineSubsystem->GetSubsystemName().ToString()));
+		}
+	}
 }
 
 void AMultiplayerShooterCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -134,25 +153,54 @@ void AMultiplayerShooterCharacter::DoJumpEnd()
 	StopJumping();
 }
 
-void AMultiplayerShooterCharacter::OpenLobby()
+void AMultiplayerShooterCharacter::CreateGameSession()
 {
-	UWorld* World = GetWorld();
-	if (World)
+	if (!OnlineSessionInterface.IsValid())
 	{
-		World->ServerTravel("/Game/ThirdPerson/Lobby?listen");
+		return;
 	}
-}
 
-void AMultiplayerShooterCharacter::CallOpenLevel(const FString& Address)
-{
-	UGameplayStatics::OpenLevel(this, *Address);
-}
-
-void AMultiplayerShooterCharacter::CallClientTravel(const FString& Address)
-{
-	APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
-	if (PlayerController)
+	FNamedOnlineSession* ExistingSession = OnlineSessionInterface->GetNamedSession(NAME_GameSession);
+	if (ExistingSession != nullptr)
 	{
-		PlayerController->ClientTravel(Address, ETravelType::TRAVEL_Absolute);
+		OnlineSessionInterface->DestroySession(NAME_GameSession);
+	}
+	
+	OnlineSessionInterface->AddOnCreateSessionCompleteDelegate_Handle(CreateSessionCompleteDelegate);
+	
+	TSharedPtr<FOnlineSessionSettings> SessionSettings = MakeShareable(new FOnlineSessionSettings());
+	SessionSettings->bIsLANMatch = false;
+	SessionSettings->NumPublicConnections = 4;
+	SessionSettings->bAllowJoinInProgress = true;
+	SessionSettings->bAllowJoinViaPresence = true;
+	SessionSettings->bShouldAdvertise = true;
+	SessionSettings->bUsesPresence = true;
+	const ULocalPlayer* LocalPlayer = GetWorld()->GetFirstLocalPlayerFromController();
+	OnlineSessionInterface->CreateSession(*LocalPlayer->GetPreferredUniqueNetId(), NAME_GameSession, *SessionSettings);
+}
+
+void AMultiplayerShooterCharacter::OnCreateSessionComplete(FName SessionName, bool bWasSuccessful)
+{
+	if (bWasSuccessful)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1, 
+				15.0f,
+				FColor::Blue, 
+				FString::Printf(TEXT("Created session %s"), *SessionName.ToString()));
+		}
+	}
+	else
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1, 
+				15.0f,
+				FColor::Red, 
+				FString(TEXT("Failed to create session!")));
+		}
 	}
 }

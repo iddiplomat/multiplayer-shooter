@@ -3,8 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "OnlineSubsystem.h"
 #include "GameFramework/Character.h"
 #include "Logging/LogMacros.h"
+#include "Interfaces/OnlineSessionDelegates.h"
 #include "MultiplayerShooterCharacter.generated.h"
 
 class USpringArmComponent;
@@ -93,13 +95,16 @@ public:
 	/** Returns FollowCamera subobject **/
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 	
-	UFUNCTION(BlueprintCallable)
-	void OpenLobby();
+public:
+	IOnlineSessionPtr OnlineSessionInterface;
 	
+protected:
 	UFUNCTION(BlueprintCallable)
-	void CallOpenLevel(const FString& Address);
+	void CreateGameSession();
 	
-	UFUNCTION(BlueprintCallable)
-	void CallClientTravel(const FString& Address);
+	void OnCreateSessionComplete(FName SessionName, bool bWasSuccessful);
+
+private:
+	FOnCreateSessionCompleteDelegate CreateSessionCompleteDelegate;
 };
 
