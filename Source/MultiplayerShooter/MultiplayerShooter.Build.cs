@@ -8,7 +8,7 @@ public class MultiplayerShooter : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] {
+		PublicDependencyModuleNames.AddRange([
 			"Core",
 			"CoreUObject",
 			"Engine",
@@ -18,29 +18,16 @@ public class MultiplayerShooter : ModuleRules
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
-			"Slate",
-		});
+			"Slate"
+		]);
 
-		PrivateDependencyModuleNames.AddRange(new string[] { });
+		PrivateDependencyModuleNames.AddRange([]);
 		
 		DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
 
-		PublicIncludePaths.AddRange(new string[] {
-			"MultiplayerShooter",
-			"MultiplayerShooter/Variant_Platforming",
-			"MultiplayerShooter/Variant_Platforming/Animation",
-			"MultiplayerShooter/Variant_Combat",
-			"MultiplayerShooter/Variant_Combat/AI",
-			"MultiplayerShooter/Variant_Combat/Animation",
-			"MultiplayerShooter/Variant_Combat/Gameplay",
-			"MultiplayerShooter/Variant_Combat/Interfaces",
-			"MultiplayerShooter/Variant_Combat/UI",
-			"MultiplayerShooter/Variant_SideScrolling",
-			"MultiplayerShooter/Variant_SideScrolling/AI",
-			"MultiplayerShooter/Variant_SideScrolling/Gameplay",
-			"MultiplayerShooter/Variant_SideScrolling/Interfaces",
-			"MultiplayerShooter/Variant_SideScrolling/UI"
-		});
+		PublicIncludePaths.AddRange([
+			"MultiplayerShooter"
+		]);
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
