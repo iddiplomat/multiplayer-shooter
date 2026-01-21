@@ -1,7 +1,9 @@
 #include "Menu.h"
 
 #include "MultiplayerSessionsSubsystem.h"
+#include "OnlineSessionSettings.h"
 #include "Components/Button.h"
+#include "Online/OnlineSessionNames.h"
 
 void UMenu::MenuSetup(int32 NumberOfPublicConnections, FString TypeOfMatch)
 {
@@ -89,10 +91,65 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 
 void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResults, bool bWasSuccessful)
 {
+	if (!MultiplayerSessionsSubsystem)
+	{
+		return;
+	}
+	
+	for (FOnlineSessionSearchResult Result : SessionResults)
+	{
+		const FString Id = Result.GetSessionIdStr();
+		const FString User = Result.Session.OwningUserName;
+		FString SettingsValue;
+		
+		// TODO::Search for better fix for that part!
+		Result.Session.SessionSettings.bUsesPresence = true;
+		Result.Session.SessionSettings.bUseLobbiesIfAvailable = true;
+		
+		Result.Session.SessionSettings.Get(FName("MatchType"), SettingsValue);
+		
+		if (SettingsValue == MatchType)
+		{
+			MultiplayerSessionsSubsystem->JoinSession(Result);
+			return;
+		}
+	}
 }
 
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 {
+	if (!MultiplayerSessionsSubsystem)
+	{
+		return;
+	}
+	
+	if (!MultiplayerSessionsSubsystem->GetSessionInterface().IsValid())
+	{
+		return;
+	}
+	
+	if (GEngine)
+	{
+		if (Result != EOnJoinSessionCompleteResult::Success)
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Failed to join session!"));
+		}
+		else
+		{
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Green, TEXT("Joined session!"));
+		}
+	}
+	
+	FString ConnectInfo;
+	MultiplayerSessionsSubsystem->GetSessionInterface()->GetResolvedConnectString(NAME_GameSession, ConnectInfo);
+	
+	APlayerController* PlayerController = GetGameInstance()->GetFirstLocalPlayerController();
+	if (!PlayerController)
+	{
+		return;
+	}
+	
+	PlayerController->ClientTravel(ConnectInfo, TRAVEL_Absolute);
 }
 
 void UMenu::OnDestroySession(bool bWasSuccessful)
@@ -117,9 +174,9 @@ void UMenu::HostButtonClicked()
 
 void UMenu::JoinButtonClicked()
 {
-	if (GEngine)
+	if (MultiplayerSessionsSubsystem)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Join Button Clicked"));
+		MultiplayerSessionsSubsystem->FindSessions(1024);
 	}
 }
 
