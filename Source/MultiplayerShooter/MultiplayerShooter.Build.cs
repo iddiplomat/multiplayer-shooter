@@ -26,7 +26,8 @@ public class MultiplayerShooter : ModuleRules
 		DynamicallyLoadedModuleNames.Add("OnlineSubsystemSteam");
 
 		PublicIncludePaths.AddRange([
-			"MultiplayerShooter"
+			"MultiplayerShooter",
+			"MultiplayerShooter/Public"
 		]);
 
 		// Uncomment if you are using Slate UI
