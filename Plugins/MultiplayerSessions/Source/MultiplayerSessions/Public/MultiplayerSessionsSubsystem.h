@@ -42,6 +42,10 @@ protected:
 	void OnStartSessionComplete(FName SessionName, bool bWasSuccessful);
 
 private:
+	bool bCreateSessionOnDestroy = false;
+	int32 LastNumPublicConnections = 0;
+	FString LastMatchType;
+	
 	IOnlineSessionPtr SessionInterface;
 	TSharedPtr<FOnlineSessionSettings> LastSessionSettings;
 	TSharedPtr<FOnlineSessionSearch> LastSessionSearch;

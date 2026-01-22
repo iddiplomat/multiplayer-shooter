@@ -50,11 +50,13 @@ bool UMenu::Initialize()
 	if (HostButton)
 	{
 		HostButton->OnClicked.AddDynamic(this, &UMenu::HostButtonClicked);
+		HostButton->SetIsEnabled(true);
 	}
 	
 	if (JoinButton)
 	{
 		JoinButton->OnClicked.AddDynamic(this, &UMenu::JoinButtonClicked);
+		JoinButton->SetIsEnabled(true);
 	}
 	
 	return true;
@@ -83,6 +85,7 @@ void UMenu::OnCreateSession(bool bWasSuccessful)
 	}
 	else
 	{
+		HostButton->SetIsEnabled(true);
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Failed to create session!"));
@@ -115,6 +118,11 @@ void UMenu::OnFindSession(const TArray<FOnlineSessionSearchResult>& SessionResul
 			return;
 		}
 	}
+	
+	if (!bWasSuccessful || SessionResults.Num() == 0)
+	{
+		JoinButton->SetIsEnabled(true);
+	}
 }
 
 void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
@@ -127,6 +135,11 @@ void UMenu::OnJoinSession(EOnJoinSessionCompleteResult::Type Result)
 	if (!MultiplayerSessionsSubsystem->GetSessionInterface().IsValid())
 	{
 		return;
+	}
+	
+	if (Result != EOnJoinSessionCompleteResult::Success)
+	{
+		JoinButton->SetIsEnabled(true);
 	}
 	
 	if (GEngine)
@@ -163,6 +176,8 @@ void UMenu::OnStartSession(bool bWasSuccessful)
 
 void UMenu::HostButtonClicked()
 {
+	HostButton->SetIsEnabled(false);
+	
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, TEXT("Host Button Clicked"));
@@ -175,6 +190,8 @@ void UMenu::HostButtonClicked()
 
 void UMenu::JoinButtonClicked()
 {
+	JoinButton->SetIsEnabled(false);
+	
 	if (MultiplayerSessionsSubsystem)
 	{
 		MultiplayerSessionsSubsystem->FindSessions(1024);
