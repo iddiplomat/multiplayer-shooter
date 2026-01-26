@@ -1,0 +1,21 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameFramework/Character.h"
+#include "MSBlasterCharacter.generated.h"
+
+UCLASS()
+class MULTIPLAYERSHOOTER_API AMSBlasterCharacter : public ACharacter
+{
+	GENERATED_BODY()
+
+public:
+	AMSBlasterCharacter();
+
+protected:
+	virtual void BeginPlay() override;
+
+public:	
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+};

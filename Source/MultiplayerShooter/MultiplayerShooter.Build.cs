@@ -27,7 +27,7 @@ public class MultiplayerShooter : ModuleRules
 
 		PublicIncludePaths.AddRange([
 			"MultiplayerShooter",
-			"MultiplayerShooter/Public"
+			"MultiplayerShooter/Private"
 		]);
 
 		// Uncomment if you are using Slate UI
