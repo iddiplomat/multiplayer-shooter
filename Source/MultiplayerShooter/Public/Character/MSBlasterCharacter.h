@@ -4,6 +4,7 @@
 #include "GameFramework/Character.h"
 #include "MSBlasterCharacter.generated.h"
 
+class UWidgetComponent;
 struct FInputActionValue;
 class UInputAction;
 class UInputMappingContext;
@@ -55,4 +56,7 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent* FollowCamera;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(AllowPrivateAccess=true))
+	UWidgetComponent* OverheadWidget;
 };
