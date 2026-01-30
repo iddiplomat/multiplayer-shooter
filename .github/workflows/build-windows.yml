@@ -1,0 +1,44 @@
+name: UE5 Build (Windows, Dev)
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout repo (with LFS)
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+          fetch-depth: 0
+
+      - name: Verify Unreal Engine
+        shell: powershell
+        run: |
+          $UE="C:\Program Files\Epic Games\UE_5.7"
+          if (!(Test-Path $UE)) {
+            Write-Error "Unreal Engine not found at $UE"
+          }
+
+      - name: Build / Cook / Stage (Development)
+        shell: powershell
+        run: |
+          $UE="C:\Program Files\Epic Games\UE_5.7"
+          $Project="$env:GITHUB_WORKSPACE\MultiplayerShooter.uproject"
+          $Out="$env:GITHUB_WORKSPACE\Build"
+
+          & "$UE\Engine\Build\BatchFiles\RunUAT.bat" `
+            BuildCookRun `
+            -project="$Project" `
+            -noP4 `
+            -platform=Win64 `
+            -clientconfig=Development `
+            -build `
+            -cook `
+            -stage `
+            -pak `
+            -archive `
+            -archivedirectory="$Out"
