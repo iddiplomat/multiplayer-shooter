@@ -28,7 +28,6 @@
 
 #Plugins
 Plugins/Developer/RiderLink
-Plugins/VisualStudioTools
 
 # Compiled Static libraries
 *.lai
