@@ -27,7 +27,6 @@ public class MultiplayerShooter : ModuleRules
 
 		PublicIncludePaths.AddRange([
 			"MultiplayerShooter",
-			"MultiplayerShooter/Private",
             "MultiplayerShooter/Public"
         ]);
 
